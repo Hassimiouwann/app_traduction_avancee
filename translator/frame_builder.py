@@ -1,18 +1,8 @@
-# translator/frame_builder.py (ultra-robuste: gestion tous cas SpaCy, slots, adjectifs, fallback)
+# translator/frame_builder.py (version ultra-robuste : détection verbe principal + slots + adj/nmod)
 
 import spacy
-import unicodedata
 
 nlp = spacy.load("fr_core_news_md")
-
-def strip_punctuation_and_accents(text):
-    # Retire ponctuation et accents
-    text = ''.join(c for c in text if c.isalnum() or c.isspace())
-    text = ''.join(
-        c for c in unicodedata.normalize('NFD', text)
-        if unicodedata.category(c) != 'Mn'
-    )
-    return text
 
 def detecter_temps_verb(token):
     if token.morph.get("Tense") == ["Past"]:
@@ -26,154 +16,98 @@ def build_frames(phrase, global_config):
     knowledge_base = global_config["knowledge_base"]
     frames_definition = global_config["frames_config"]["frames_definition"]
 
-    # Analyse la phrase normale, puis fallback sans ponctuation/accents si frames vides
     doc = nlp(phrase)
-    frames = _build_frames_from_doc(doc, knowledge_base, frames_definition)
-    if not frames:
-        doc = nlp(strip_punctuation_and_accents(phrase))
-        frames = _build_frames_from_doc(doc, knowledge_base, frames_definition, fallback=True)
-    # Si toujours rien, retourne un diagnostic spécial
-    if not frames:
-        return [{
-            "type": "no_frame_detected",
-            "diagnostic": [(t.text, t.lemma_, t.pos_, t.dep_, t.head.text) for t in doc]
-        }]
-    return frames
-
-def _build_frames_from_doc(doc, knowledge_base, frames_definition, fallback=False):
     frames = []
-    # 1. Prends tous les tokens VERB (peu importe leur dep_)
+
+    print("\n--- Diagnostic SpaCy complet ---")
+    for token in doc:
+        print(f"{token.text} | lemma: {token.lemma_}, dep: {token.dep_}, "
+              f"pos: {token.pos_}, head: {token.head.text}, morph: {token.morph}")
+    print("--- Fin diagnostic ---\n")
+
+    # Prend tous les tokens VERB (même s'ils ne sont pas ROOT ou flat:name)
     verb_tokens = [tok for tok in doc if tok.pos_ == "VERB"]
-    # 2. Si rien trouvé, prends tokens avec "VerbForm" dans la morpho
+    # Si rien trouvé, tente aussi les NOUN "mal taggués"
     if not verb_tokens:
-        verb_tokens = [tok for tok in doc if "VerbForm" in tok.morph or tok.tag_ in {"VERB", "AUX"}]
-    # 3. Si toujours rien, prends le ROOT et ses enfants
-    if not verb_tokens:
-        for tok in doc:
-            if tok.dep_ == "ROOT":
-                if tok.pos_ in ("VERB", "NOUN", "PROPN"):
-                    verb_tokens.append(tok)
-                for child in tok.children:
-                    if child.pos_ == "VERB":
-                        verb_tokens.append(child)
-    # 4. S'il n'y a vraiment rien, prend tout NOUN/PROPN avec det/adjectif
-    if not verb_tokens:
-        for tok in doc:
-            if tok.pos_ in ("NOUN", "PROPN") and (
-                any(child.dep_ == "det" for child in tok.children) or
-                any(child.pos_ == "ADJ" for child in tok.children)
-            ):
-                verb_tokens.append(tok)
+        verb_tokens = [tok for tok in doc if tok.tag_ in {"VERB", "AUX"} or "VerbForm" in tok.morph]
 
     for token in verb_tokens:
         lemma_spacy = token.lemma_.lower()
-        # Essaie toutes les variantes du lemma (avec et sans accents)
-        verb_kb = get_from_kb_with_fallback(lemma_spacy, knowledge_base.get("verbes", {}))
-        if not verb_kb:
+        if lemma_spacy in knowledge_base.get("verbes", {}):
+            verbe_info = knowledge_base["verbes"][lemma_spacy]
+        else:
             form_token = token.text.lower()
-            verb_kb = get_from_kb_with_fallback(form_token, knowledge_base.get("verbes", {}))
-            if not verb_kb:
+            if form_token in knowledge_base.get("verbes", {}):
+                lemma_spacy = form_token
+                verbe_info = knowledge_base["verbes"][form_token]
+            else:
                 continue
-            lemma_spacy = form_token
 
-        primitive = verb_kb.get("primitive")
+        primitive = verbe_info.get("primitive")
         if primitive:
             temps = detecter_temps_verb(token)
             frame_instance = fill_frame(token, primitive, doc, frames_definition)
             frame_instance["temps"] = temps
             frame_instance["verbe_fr"] = lemma_spacy
-            if fallback:
-                frame_instance["spaCy_fallback"] = True
             frames.append(frame_instance)
+
     return frames
-
-def get_from_kb_with_fallback(key, kb_dict):
-    # Essaie clé brute, puis sans accents, puis fallback None
-    if key in kb_dict:
-        return kb_dict[key]
-    key_noacc = unaccent(key)
-    if key_noacc in kb_dict:
-        return kb_dict[key_noacc]
-    return None
-
-def unaccent(text):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', text)
-        if unicodedata.category(c) != 'Mn'
-    )
 
 def slot_value_with_pos(token):
     if token is None:
         return None
-    # Récupère tous les adjectifs, déterminants, amod, poss à gauche
-    elements = []
+    # Ajout : concatène adjectif(s) éventuel(s)
+    text = token.text
     if hasattr(token, "children"):
-        # Trie les enfants par index pour garder l'ordre
-        lefts = sorted([child for child in token.children
-                        if child.dep_ in ("amod", "det", "poss") or child.pos_ == "ADJ"],
-                       key=lambda t: t.i)
-        for t in lefts:
-            elements.append(t.text)
-    elements.append(token.text)
-    # Ajoute les adjectifs à droite (ex : pomme rouge foncé)
-    if hasattr(token, "children"):
-        rights = sorted([child for child in token.children
-                        if child.dep_ in ("amod",) and child.i > token.i],
-                        key=lambda t: t.i)
-        for t in rights:
-            elements.append(t.text)
-    return {"text": " ".join(elements), "pos": token.pos_}
+        adjs = [child.text for child in token.children if child.pos_ == "ADJ"]
+        if adjs:
+            text = " ".join(adjs + [text])
+    return {"text": text, "pos": token.pos_}
 
 def fill_frame(verb_token, primitive, doc, frames_definition):
     frame_info = frames_definition.get(primitive, {})
     slots = frame_info.get("slots", [])
+
     frame_instance = {"primitive": primitive}
     for slot in slots:
         frame_instance[slot] = None
 
-    # AGENT
     if "agent" in frame_instance:
         frame_instance["agent"] = slot_value_with_pos(find_nsubj(verb_token, doc))
-    # OBJET
     if "objet" in frame_instance:
         frame_instance["objet"] = slot_value_with_pos(find_obj(verb_token, doc))
-    # SOURCE/DEST
     if "source" in frame_instance or "destination" in frame_instance:
         src, dst = find_source_destination(verb_token)
         if "source" in frame_instance:
             frame_instance["source"] = slot_value_with_pos(src)
         if "destination" in frame_instance:
             frame_instance["destination"] = slot_value_with_pos(dst)
-    # INSTRUMENT
     if "instrument" in frame_instance:
-        frame_instance["instrument"] = slot_value_with_pos(find_instrument(verb_token, doc))
-    # MANIERE
+        frame_instance["instrument"] = slot_value_with_pos(find_instrument(verb_token))
     if "manière" in frame_instance:
         frame_instance["manière"] = slot_value_with_pos(find_manner(verb_token))
-    # BENEFICIAIRE
     if "bénéficiaire" in frame_instance:
         frame_instance["bénéficiaire"] = slot_value_with_pos(find_beneficiaire(verb_token, doc))
-    # Slots additionnels
     if "information" in frame_instance:
-        frame_instance["information"] = slot_value_with_pos(find_information(verb_token, doc))
+        frame_instance["information"] = slot_value_with_pos(find_information(verb_token))
     if "idées_source" in frame_instance:
-        frame_instance["idées_source"] = slot_value_with_pos(find_ideas_source(verb_token, doc))
+        frame_instance["idées_source"] = slot_value_with_pos(find_ideas_source(verb_token))
     if "résultat" in frame_instance:
-        frame_instance["résultat"] = slot_value_with_pos(find_result(verb_token, doc))
+        frame_instance["résultat"] = slot_value_with_pos(find_result(verb_token))
     if "direction" in frame_instance:
-        frame_instance["direction"] = slot_value_with_pos(find_direction(verb_token, doc))
+        frame_instance["direction"] = slot_value_with_pos(find_direction(verb_token))
     if "force" in frame_instance:
-        frame_instance["force"] = slot_value_with_pos(find_force(verb_token, doc))
+        frame_instance["force"] = slot_value_with_pos(find_force(verb_token))
     if "substance" in frame_instance:
-        frame_instance["substance"] = slot_value_with_pos(find_substance(verb_token, doc))
+        frame_instance["substance"] = slot_value_with_pos(find_substance(verb_token))
     if "origin" in frame_instance:
-        frame_instance["origin"] = slot_value_with_pos(find_origin(verb_token, doc))
+        frame_instance["origin"] = slot_value_with_pos(find_origin(verb_token))
     if "message" in frame_instance:
-        frame_instance["message"] = slot_value_with_pos(find_message(verb_token, doc))
+        frame_instance["message"] = slot_value_with_pos(find_message(verb_token))
     if "audience" in frame_instance:
         frame_instance["audience"] = slot_value_with_pos(find_audience(verb_token, doc))
     if "cible_sens" in frame_instance:
-        frame_instance["cible_sens"] = slot_value_with_pos(find_cible_sens(verb_token, doc))
+        frame_instance["cible_sens"] = slot_value_with_pos(find_cible_sens(verb_token))
 
     return frame_instance
 
@@ -185,28 +119,16 @@ def find_nsubj(verb_token, doc):
     for tok in doc:
         if tok.i < verb_token.i and tok.pos_ in ("PROPN", "NOUN"):
             return tok
-    # Fallback : root s'il est NOUN/PROPN
-    for tok in doc:
-        if tok.dep_ == "ROOT" and tok.pos_ in ("PROPN", "NOUN"):
-            return tok
     return None
 
 def find_obj(verb_token, doc):
-    # Cherche obj, dobj, obj:obj
     for child in verb_token.children:
         if child.dep_ in ("obj", "dobj", "obj:obj"):
             return child
-    # Fallback : NOUN/PROPN à droite du verbe
+    # Fallback: NOUN à droite du verbe
     for tok in doc:
-        if tok.i > verb_token.i and tok.pos_ in ("NOUN", "PROPN"):
+        if tok.i > verb_token.i and tok.pos_ == "NOUN":
             return tok
-    # Fallback : enfant det > NOUN
-    for child in verb_token.children:
-        if child.pos_ == "NOUN":
-            return child
-        for gchild in child.children:
-            if gchild.dep_ == "det":
-                return child
     return None
 
 def find_source_destination(verb_token):
@@ -224,7 +146,6 @@ def find_source_destination(verb_token):
             elif prep_text in ("vers", "à", "au", "aux"):
                 if not destination:
                     destination = child
-            # sous-compléments
             for subchild in child.children:
                 for subgrandchild in subchild.children:
                     if subgrandchild.dep_ == "case":
@@ -235,13 +156,7 @@ def find_source_destination(verb_token):
                             destination = subchild
     return source, destination
 
-def find_instrument(verb_token, doc):
-    # Prend un "avec" ou "par" + NOUN
-    for child in verb_token.children:
-        if child.dep_ in ("obl", "obl:mod"):
-            for gchild in child.children:
-                if gchild.text.lower() in ("avec", "par"):
-                    return child
+def find_instrument(verb_token):
     return None
 
 def find_manner(verb_token):
@@ -251,41 +166,35 @@ def find_manner(verb_token):
     return None
 
 def find_beneficiaire(verb_token, doc):
-    # Cherche iobj, obl:arg, obl, nmod avec prep "à"
+    # Cherche iobj/obl:arg/obl/nmod à droite de l'objet (ex: à Pierre)
     for child in verb_token.children:
         if child.dep_ in ("iobj", "obl:arg", "obl", "obl:mod", "nmod"):
             for grandchild in child.children:
-                if grandchild.dep_ == "case" and grandchild.text.lower() in (
-                    "à", "au", "aux", "a", "a'", "à l'", "a l'", "l'", "à l’"
-                ):
+                if grandchild.dep_ == "case" and grandchild.text.lower() in ("à", "au", "aux", "a", "a'", "à l'", "a l'", "l'", "à l’"):
                     return child
-    # Fallback : nmod à droite du verbe qui est un humain
+    # Fallback : nmod à droite de l'objet ou du verbe
     for tok in doc:
         if tok.dep_ == "nmod" and tok.i > verb_token.i and tok.pos_ in ("PROPN", "NOUN"):
             return tok
     return None
 
-def find_information(verb_token, doc):
-    # Cherche NOUN obj ou nmod
-    for child in verb_token.children:
-        if child.pos_ == "NOUN" and child.dep_ in ("obj", "nmod"):
-            return child
+def find_information(verb_token):
     return None
 
-def find_ideas_source(verb_token, doc):
+def find_ideas_source(verb_token):
     return None
 
-def find_result(verb_token, doc):
+def find_result(verb_token):
     return None
 
-def find_direction(verb_token, doc):
+def find_direction(verb_token):
     return None
 
-def find_force(verb_token, doc):
+def find_force(verb_token):
     return None
 
-def find_substance(verb_token, doc):
-    direct_obj = find_obj(verb_token, doc)
+def find_substance(verb_token):
+    direct_obj = find_obj(verb_token, verb_token.doc)
     if direct_obj:
         return direct_obj
     for child in verb_token.children:
@@ -298,24 +207,22 @@ def find_substance(verb_token, doc):
                 return child
     return None
 
-def find_origin(verb_token, doc):
+def find_origin(verb_token):
     return None
 
-def find_message(verb_token, doc):
-    return find_obj(verb_token, doc)
+def find_message(verb_token):
+    return find_obj(verb_token, verb_token.doc)
 
 def find_audience(verb_token, doc):
     for child in verb_token.children:
         if child.dep_ in ("iobj", "obl:arg", "obl", "obl:mod", "nmod"):
             for grandchild in child.children:
-                if grandchild.dep_ == "case" and grandchild.text.lower() in (
-                    "à", "au", "aux", "a", "a'", "à l'", "a l'", "l'", "à l’"
-                ):
+                if grandchild.dep_ == "case" and grandchild.text.lower() in ("à", "au", "aux", "a", "a'", "à l'", "a l'", "l'"):
                     return child
     for tok in doc:
         if tok.dep_ == "nmod" and tok.i > verb_token.i and tok.pos_ in ("PROPN", "NOUN"):
             return tok
     return None
 
-def find_cible_sens(verb_token, doc):
-    return find_obj(verb_token, doc)
+def find_cible_sens(verb_token):
+    return find_obj(verb_token, verb_token.doc)
