@@ -1,0 +1,229 @@
+<!-- templates/enrichir_global.html -->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Enrichir la configuration globale</title>
+</head>
+<body>
+
+<h2>Enrichir la configuration globale</h2>
+
+<p>Cette page permet d'ajouter dynamiquement soit des mots (dans la base de connaissances), soit des éléments de config frames.</p>
+
+<!-- Formulaire principal -->
+<form id="frmEnrichir">
+
+  <!-- Choix de la zone : knowledge_base ou frames_config -->
+  <label for="type_zone">Zone à enrichir :</label>
+  <select id="type_zone" onchange="afficherChampsZone()">
+    <option value="">-- Sélectionnez --</option>
+    <option value="knowledge_base">knowledge_base</option>
+    <option value="frames_config">frames_config</option>
+  </select>
+
+  <!-- Conteneur qui va afficher les champs spécifiques à la zone -->
+  <div id="zone_specifique" style="margin-top:20px;"></div>
+
+  <!-- Bouton pour envoyer les données -->
+  <button type="button" onclick="envoyerDonnees()">Enregistrer</button>
+</form>
+
+<div id="resultat" style="margin-top:20px; color:green;"></div>
+
+<script>
+/* 
+   1) On choisit "type_zone" => soit "knowledge_base", soit "frames_config".
+   2) On affiche un second select ou des champs spécifiques :
+      - knowledge_base => champ "categorie" => si "verbes" => champ "primitive" ?
+      - frames_config => champ "type_data" => "celestial_bodies_rules", etc.
+        puis selon ce type_data, on affiche les champs appropriés.
+*/
+
+/* Fonction appelée quand on change le select type_zone */
+function afficherChampsZone() {
+  const zone = document.getElementById('type_zone').value;
+  const zoneSpecifique = document.getElementById('zone_specifique');
+  zoneSpecifique.innerHTML = ""; // on vide
+
+  if (zone === "knowledge_base") {
+    // On propose un select "categorie"
+    zoneSpecifique.innerHTML = `
+      <label for="categorie">Catégorie :</label>
+      <select id="categorie" onchange="afficherChampsCategorie()">
+        <option value="">-- Sélectionnez --</option>
+        <option value="noms">noms</option>
+        <option value="verbes">verbes</option>
+        <option value="adverbes">adverbes</option>
+        <option value="adjectifs">adjectifs</option>
+        <option value="expressions">expressions</option>
+        <!-- etc. -->
+      </select>
+
+      <div id="champs_kb" style="margin-top:20px;"></div>
+    `;
+  }
+  else if (zone === "frames_config") {
+    // On propose un select type_data
+    zoneSpecifique.innerHTML = `
+      <label for="type_data">Type de data (frames_config) :</label>
+      <select id="type_data" onchange="afficherChampsFramesConfig()">
+        <option value="">-- Sélectionnez --</option>
+        <option value="celestial_bodies_rules">celestial_bodies_rules (astres)</option>
+        <option value="primitive_to_en_verb">primitive_to_en_verb</option>
+        <option value="frames_definition">frames_definition</option>
+      </select>
+
+      <div id="champs_fc" style="margin-top:20px;"></div>
+    `;
+  }
+}
+
+/* Fonction appelée quand on change la "categorie" en knowledge_base */
+function afficherChampsCategorie() {
+  const cat = document.getElementById('categorie').value;
+  const champsKb = document.getElementById('champs_kb');
+  champsKb.innerHTML = "";
+
+  if (cat) {
+    // On va toujours avoir mot_fr, mot_en
+    // Si cat == "verbes", on ajoute un champ "primitive"
+    let html = `
+      <label for="mot_fr">Mot (FR) :</label>
+      <input type="text" id="mot_fr" placeholder="ex: chat"><br><br>
+
+      <label for="mot_en">Traduction (EN) :</label>
+      <input type="text" id="mot_en" placeholder="ex: cat"><br><br>
+    `;
+    if (cat === "verbes") {
+      html += `
+        <label for="primitive">Primitive :</label>
+        <input type="text" id="primitive" placeholder="ex: PTRANS"><br><br>
+      `;
+    }
+    champsKb.innerHTML = html;
+  }
+}
+
+/* Fonction appelée quand on change le type_data en frames_config */
+function afficherChampsFramesConfig() {
+  const td = document.getElementById('type_data').value;
+  const champsFc = document.getElementById('champs_fc');
+  champsFc.innerHTML = "";
+
+  if (!td) return;
+
+  if (td === "celestial_bodies_rules") {
+    champsFc.innerHTML = `
+      <label for="clef">Nom (FR) / clef :</label>
+      <input type="text" id="clef" placeholder="ex: lune"><br><br>
+
+      <label for="subject_form">subject_form :</label>
+      <input type="text" id="subject_form" placeholder="ex: the Moon"><br><br>
+
+      <label for="non_subject_form">non_subject_form :</label>
+      <input type="text" id="non_subject_form" placeholder="ex: the Moon"><br><br>
+    `;
+  }
+  else if (td === "primitive_to_en_verb") {
+    champsFc.innerHTML = `
+      <label for="primitive">Primitive :</label>
+      <input type="text" id="primitive" placeholder="ex: MTRANS"><br><br>
+
+      <label for="verb_en">Verbe EN :</label>
+      <input type="text" id="verb_en" placeholder="ex: transfer"><br><br>
+    `;
+  }
+  else if (td === "frames_definition") {
+    champsFc.innerHTML = `
+      <label for="primitive">Nom de la primitive :</label>
+      <input type="text" id="primitive" placeholder="ex: PROPEL"><br><br>
+
+      <label>Slots (séparés par des virgules) :</label>
+      <input type="text" id="slots" placeholder="ex: agent,objet,destination"><br><br>
+
+      <label for="description">Description :</label>
+      <textarea id="description" placeholder="Décrivez la primitive..."></textarea><br><br>
+    `;
+  }
+}
+
+/* Fonction pour envoyer le JSON vers /ajouter_data */
+function envoyerDonnees() {
+  const zone = document.getElementById('type_zone').value;
+  if (!zone) {
+    alert("Veuillez sélectionner 'knowledge_base' ou 'frames_config'.");
+    return;
+  }
+
+  let body = { type_zone: zone };
+
+  // Si c'est knowledge_base
+  if (zone === "knowledge_base") {
+    const cat = document.getElementById('categorie').value;
+    if (!cat) {
+      alert("Veuillez choisir une catégorie (noms, verbes, etc.).");
+      return;
+    }
+    body.categorie = cat;
+
+    // Récupérer mot_fr / mot_en
+    const motFr = document.getElementById('mot_fr')?.value.trim();
+    const motEn = document.getElementById('mot_en')?.value.trim();
+    if (!motFr || !motEn) {
+      alert("Veuillez remplir 'mot_fr' et 'mot_en'.");
+      return;
+    }
+    body.mot_fr = motFr;
+    body.mot_en = motEn;
+
+    // Si cat == "verbes", on ajoute primitive
+    if (cat === "verbes") {
+      const prim = document.getElementById('primitive')?.value.trim();
+      if (prim) body.primitive = prim;
+    }
+  }
+  else if (zone === "frames_config") {
+    const td = document.getElementById('type_data').value;
+    if (!td) {
+      alert("Veuillez choisir un 'type_data' (celestial_bodies_rules, etc.).");
+      return;
+    }
+    body.type_data = td;
+
+    // Selon td
+    if (td === "celestial_bodies_rules") {
+      body.clef = document.getElementById('clef')?.value.trim();
+      body.subject_form = document.getElementById('subject_form')?.value.trim();
+      body.non_subject_form = document.getElementById('non_subject_form')?.value.trim();
+    }
+    else if (td === "primitive_to_en_verb") {
+      body.primitive = document.getElementById('primitive')?.value.trim();
+      body.verb_en = document.getElementById('verb_en')?.value.trim();
+    }
+    else if (td === "frames_definition") {
+      body.primitive = document.getElementById('primitive')?.value.trim();
+      const slotsStr = document.getElementById('slots')?.value.trim();
+      body.slots = slotsStr ? slotsStr.split(",").map(s=>s.trim()) : [];
+      body.description = document.getElementById('description')?.value.trim();
+    }
+  }
+
+  fetch('/ajouter_data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  })
+  .then(res => res.json())
+  .then(response => {
+    document.getElementById('resultat').innerText = response.msg || "Données enregistrées !";
+  })
+  .catch(err => {
+    document.getElementById('resultat').innerText = "Erreur : " + err;
+  });
+}
+</script>
+
+</body>
+</html>

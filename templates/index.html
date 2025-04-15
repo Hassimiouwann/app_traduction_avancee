@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Traducteur Avancé FR-EN</title>
+  <!-- Lien éventuel vers ta feuille de style -->
+  <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+
+  <div class="container">
+    <h2>Traducteur Avancé FR ➡️ EN</h2>
+
+    <!-- Zone de saisie de la phrase -->
+    <textarea id="phrase" placeholder="Entrez une phrase en français"></textarea>
+
+    <!-- Bouton de traduction -->
+    <button onclick="traduire()">Traduire</button>
+
+    <!-- Indicateur de chargement -->
+    <div id="loading" style="display:none;">
+      <em>Traduction en cours...</em>
+    </div>
+
+    <!-- Zone d'affichage du résultat -->
+    <div id="resultat" style="margin-top:20px; font-weight:bold; color:green;"></div>
+
+    <!-- Bouton de copie -->
+    <button onclick="copierTraduction()">Copier la traduction</button>
+
+    <!-- Lien pour aller à la page unique d'enrichissement (unifiée) -->
+    <p>
+      <a href="/enrichir_config">Enrichir la config globale (base + frames)</a>
+    </p>
+  </div>
+
+  <script>
+    // Fonction qui appelle l'endpoint /traduire
+    function traduire() {
+      // On indique "loading" en cours
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('resultat').innerHTML = '';
+
+      const phraseFr = document.getElementById('phrase').value.trim();
+      fetch('/traduire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phrase: phraseFr })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        // data.phrase_traduite : la traduction
+        const traduction = data.phrase_traduite || "Pas de traduction";
+        document.getElementById('resultat').innerText = traduction;
+      })
+      .catch(err => {
+        console.error('Erreur:', err);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('resultat').innerText = "Erreur lors de la traduction.";
+      });
+    }
+
+    // Fonction pour copier la traduction
+    function copierTraduction() {
+      const texte = document.getElementById('resultat').innerText;
+      if (!texte) return;
+      navigator.clipboard.writeText(texte)
+        .then(() => {
+          alert("Traduction copiée dans le presse-papier !");
+        })
+        .catch(err => console.error("Erreur lors de la copie: ", err));
+    }
+  </script>
+
+</body>
+</html>

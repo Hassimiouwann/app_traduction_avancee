@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Enrichir la config frames</title>
+</head>
+<body>
+
+  <h2>Enrichir la config frames</h2>
+
+  <p>Ici, vous pouvez ajouter dynamiquement :</p>
+  <ul>
+    <li>Nouveaux « astres » (terre, lune, etc.) dans <code>celestial_bodies_rules</code> pour gérer <em>subject_form</em> / <em>non_subject_form</em>.</li>
+    <li>Nouvelles associations “primitive” → “verbe anglais” (dans <code>primitive_to_en_verb</code>).</li>
+    <li>Nouvelles définitions de primitives (dans <code>frames_definition</code>).</li>
+    <li>Association verbe français → primitive Schank (dans <code>primitives_map</code>).</li>
+  </ul>
+
+  <!-- Formulaire général qui s'adapte selon le "type_data" choisi -->
+  <form id="frmEnrichir">
+    <label for="type_data">Type de data :</label>
+    <select id="type_data" onchange="afficherChamps()">
+      <option value="">-- Choisissez --</option>
+      <option value="celestial_bodies_rules">Astres (celestial_bodies_rules)</option>
+      <option value="primitive_to_en_verb">Primitive -> Verbe EN (primitive_to_en_verb)</option>
+      <option value="frames_definition">Frames Definition (frames_definition)</option>
+      <option value="primitives_map">Verbe FR -> Primitive (primitives_map)</option>
+    </select>
+
+    <div id="champs_form" style="margin-top: 20px;">
+      <!-- On affiche dynamiquement les champs requis selon type_data -->
+    </div>
+
+    <button type="button" onclick="envoyerDonnees()">Ajouter/Enregistrer</button>
+  </form>
+
+  <div id="resultat" style="margin-top:20px; color:green;"></div>
+
+
+  <script>
+    function afficherChamps() {
+      const typeData = document.getElementById('type_data').value;
+      const champsForm = document.getElementById('champs_form');
+
+      champsForm.innerHTML = ""; // on nettoie
+
+      if (typeData === "celestial_bodies_rules") {
+        champsForm.innerHTML = `
+          <label>Nom (FR) / clef : </label>
+          <input type="text" id="clef" placeholder="ex: monde" required><br><br>
+          <label>subject_form : </label>
+          <input type="text" id="subject_form" placeholder="ex: the World"><br><br>
+          <label>non_subject_form : </label>
+          <input type="text" id="non_subject_form" placeholder="ex: the world"><br><br>
+        `;
+      }
+      else if (typeData === "primitive_to_en_verb") {
+        champsForm.innerHTML = `
+          <label>Primitive : </label>
+          <input type="text" id="primitive" placeholder="ex: MTRANS" required><br><br>
+          <label>Verbe EN : </label>
+          <input type="text" id="verb_en" placeholder="ex: transmit"><br><br>
+        `;
+      }
+      else if (typeData === "frames_definition") {
+        champsForm.innerHTML = `
+          <label>Primitive : </label>
+          <input type="text" id="primitive" placeholder="ex: PROPEL" required><br><br>
+          <label>Slots (séparés par virgule) : </label>
+          <input type="text" id="slots" placeholder="ex: agent, objet, destination"><br><br>
+          <label>Description : </label>
+          <textarea id="description" placeholder="Décrivez la primitive..."></textarea><br><br>
+        `;
+      }
+      else if (typeData === "primitives_map") {
+        champsForm.innerHTML = `
+          <label>Verbe FR : </label>
+          <input type="text" id="verbe_fr" placeholder="ex: envoyer" required><br><br>
+          <label>Primitive : </label>
+          <input type="text" id="primitive" placeholder="ex: ATRANS"><br><br>
+        `;
+      }
+    }
+
+    function envoyerDonnees() {
+      const typeData = document.getElementById('type_data').value;
+      if (!typeData) {
+        alert("Veuillez choisir un type de data à ajouter.");
+        return;
+      }
+
+      let body = { type_data: typeData };
+
+      // On lit les champs en fonction de type_data
+      if (typeData === "celestial_bodies_rules") {
+        body.clef = document.getElementById('clef').value.trim();
+        body.subject_form = document.getElementById('subject_form').value.trim();
+        body.non_subject_form = document.getElementById('non_subject_form').value.trim();
+      }
+      else if (typeData === "primitive_to_en_verb") {
+        body.primitive = document.getElementById('primitive').value.trim();
+        body.verb_en = document.getElementById('verb_en').value.trim();
+      }
+      else if (typeData === "frames_definition") {
+        body.primitive = document.getElementById('primitive').value.trim();
+        let slotsStr = document.getElementById('slots').value.trim();
+        body.slots = slotsStr ? slotsStr.split(",").map(s=>s.trim()) : [];
+        body.description = document.getElementById('description').value.trim();
+      }
+      else if (typeData === "primitives_map") {
+        body.verbe_fr = document.getElementById('verbe_fr').value.trim();
+        body.primitive = document.getElementById('primitive').value.trim();
+      }
+
+      fetch('/ajouter_frames_config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      .then(resp => resp.json())
+      .then(res => {
+        document.getElementById('resultat').innerText = res.msg || "Enregistré !";
+      })
+      .catch(err => {
+        document.getElementById('resultat').innerText = "Erreur: " + err;
+      });
+    }
+  </script>
+</body>
+</html>

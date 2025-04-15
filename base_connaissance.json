@@ -1,0 +1,165 @@
+{
+    "verbes": {
+        "décoller": {
+            "primitive": "PTRANS",
+            "infinitif": "décoller",
+            "en": {
+                "présent": "takes off",
+                "imparfait": "was taking off",
+                "passé": "took off",
+                "passé_composé": "has taken off",
+                "futur": "will take off",
+                "conditionnel": "would take off",
+                "subjonctif": "take off (subj.)"
+            }
+        },
+        "donner": {
+            "primitive": "ATRANS",
+            "infinitif": "donner",
+            "en": {
+                "présent": "gives",
+                "imparfait": "was giving",
+                "passé": "gave",
+                "passé_composé": "has given",
+                "futur": "will give",
+                "conditionnel": "would give",
+                "subjonctif": "give (subj.)"
+            }
+        },
+        "marcher": {
+            "primitive": "MOVE",
+            "infinitif": "marcher",
+            "en": {
+                "présent": "walks",
+                "imparfait": "was walking",
+                "passé": "walked",
+                "passé_composé": "has walked",
+                "futur": "will walk",
+                "conditionnel": "would walk",
+                "subjonctif": "walk (subj.)"
+            }
+        },
+        "transmettre": {
+            "primitive": "ATRANS",
+            "infinitif": "transmettre",
+            "en": {
+                "présent": "transmits",
+                "imparfait": "was transmitting",
+                "passé": "transmitted",
+                "passé_composé": "has transmitted",
+                "futur": "will transmit",
+                "conditionnel": "would transmit",
+                "subjonctif": "transmit (subj.)"
+            }
+        }
+    },
+    "noms": {
+        "fusée": "spaceship",
+        "terre": "earth",
+        "lune": "moon",
+        "étudiant": "student",
+        "enseignant": "teacher",
+        "livre": "book",
+        "voyageur": "traveler",
+        "village": "village",
+        "ville": "city",
+        "message": "message",
+        "chat": "cat"
+    },
+    "prépositions": {
+        "vers": "to",
+        "de": "from",
+        "à": "to"
+    },
+    "temps_marqueurs": {
+        "présent": [
+            "maintenant",
+            "aujourd'hui",
+            "en ce moment"
+        ],
+        "passé": [
+            "hier",
+            "avant",
+            "précédemment",
+            "déjà",
+            "passé",
+            "dernier"
+        ],
+        "futur": [
+            "demain",
+            "après",
+            "plus tard",
+            "bientôt",
+            "prochain"
+        ]
+    },
+    "adjectifs": {
+        "rapide": "fast",
+        "lent": "slow",
+        "grand": "big",
+        "petit": "small",
+        "nouveau": "new",
+        "vieux": "old",
+        "précis": "precise",
+        "puissant": "powerful",
+        "magnifique": "wonderful",
+        "beau": "beautiful",
+        "intelligent": "smart"
+    },
+    "adverbes": {
+        "rapidement": "quickly",
+        "lentement": "slowly",
+        "doucement": "gently",
+        "précisément": "precisely",
+        "soudainement": "suddenly"
+    },
+    "conjonctions": {
+        "et": "and",
+        "mais": "but",
+        "ou": "or",
+        "donc": "therefore",
+        "car": "because"
+    },
+    "pronoms": {
+        "je": "I",
+        "tu": "you",
+        "il": "he",
+        "elle": "she",
+        "nous": "we",
+        "vous": "you",
+        "ils": "they",
+        "elles": "they"
+    },
+    "articles": {
+        "la": "the",
+        "le": "the",
+        "l'": "the",
+        "un": "a",
+        "une": "a",
+        "des": "some",
+        "du": "some"
+    },
+    "interjections": {
+        "oh": "oh",
+        "ah": "ah",
+        "zut": "darn",
+        "oups": "oops"
+    },
+    "expressions": {
+        "il pleut des cordes": "it's raining cats and dogs",
+        "faire d'une pierre deux coups": "to kill two birds with one stone",
+        "mettre la charrue avant les bœufs": "to put the cart before the horse"
+    },
+    "nombres": {
+        "un": "one",
+        "deux": "two",
+        "trois": "three",
+        "quatre": "four",
+        "cinq": "five",
+        "six": "six",
+        "sept": "seven",
+        "huit": "eight",
+        "neuf": "nine",
+        "dix": "ten"
+    }
+}

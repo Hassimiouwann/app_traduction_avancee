@@ -1,0 +1,606 @@
+{
+    "knowledge_base": {
+        "verbes": {
+            "décoller": {
+                "primitive": "PTRANS",
+                "en": {
+                    "présent": "takes off",
+                    "passé": "took off",
+                    "futur": "will take off"
+                }
+            },
+            "marcher": {
+                "primitive": "MOVE",
+                "en": {
+                    "présent": "walks",
+                    "passé": "walked",
+                    "futur": "will walk"
+                }
+            },
+            "transmettre": {
+                "primitive": "ATRANS",
+                "en": {
+                    "présent": "transfers",
+                    "passé": "transferred",
+                    "futur": "will transfer"
+                }
+            },
+            "donner": {
+                "primitive": "ATRANS",
+                "en": {
+                    "présent": "gives",
+                    "passé": "gave",
+                    "futur": "will give"
+                }
+            },
+            "envoyer": {
+                "primitive": "ATRANS",
+                "en": {
+                    "présent": "sends",
+                    "passé": "sent",
+                    "futur": "will send"
+                }
+            },
+            "recevoir": {
+                "primitive": "ATRANS",
+                "en": {
+                    "présent": "receives",
+                    "passé": "received",
+                    "futur": "will receive"
+                }
+            },
+            "apprendre": {
+                "primitive": "MTRANS",
+                "en": {
+                    "présent": "learns",
+                    "passé": "learned",
+                    "futur": "will learn"
+                }
+            },
+            "enseigner": {
+                "primitive": "ATRANS",
+                "en": {
+                    "présent": "teaches",
+                    "passé": "taught",
+                    "futur": "will teach"
+                }
+            },
+            "penser": {
+                "primitive": "MTRANS",
+                "en": {
+                    "présent": "thinks",
+                    "passé": "thought",
+                    "futur": "will think"
+                }
+            },
+            "concevoir": {
+                "primitive": "MBUILD",
+                "en": {
+                    "présent": "conceives",
+                    "passé": "conceived",
+                    "futur": "will conceive"
+                }
+            },
+            "créer": {
+                "primitive": "MBUILD",
+                "en": {
+                    "présent": "creates",
+                    "passé": "created",
+                    "futur": "will create"
+                }
+            },
+            "imaginer": {
+                "primitive": "MBUILD",
+                "en": {
+                    "présent": "imagines",
+                    "passé": "imagined",
+                    "futur": "will imagine"
+                }
+            },
+            "pousser": {
+                "primitive": "PROPEL",
+                "en": {
+                    "présent": "pushes",
+                    "passé": "pushed",
+                    "futur": "will push"
+                }
+            },
+            "tirer": {
+                "primitive": "PROPEL",
+                "en": {
+                    "présent": "pulls",
+                    "passé": "pulled",
+                    "futur": "will pull"
+                }
+            },
+            "manger": {
+                "primitive": "INGEST",
+                "en": {
+                    "présent": "eats",
+                    "passé": "ate",
+                    "futur": "will eat"
+                }
+            },
+            "boire": {
+                "primitive": "INGEST",
+                "en": {
+                    "présent": "drinks",
+                    "passé": "drank",
+                    "futur": "will drink"
+                }
+            },
+            "cracher": {
+                "primitive": "EXPEL",
+                "en": {
+                    "présent": "spits",
+                    "passé": "spat",
+                    "futur": "will spit"
+                }
+            },
+            "souffler": {
+                "primitive": "EXPEL",
+                "en": {
+                    "présent": "blows",
+                    "passé": "blew",
+                    "futur": "will blow"
+                }
+            },
+            "dire": {
+                "primitive": "SPEAK",
+                "en": {
+                    "présent": "says",
+                    "passé": "said",
+                    "futur": "will say"
+                }
+            },
+            "parler": {
+                "primitive": "SPEAK",
+                "en": {
+                    "présent": "speaks",
+                    "passé": "spoke",
+                    "futur": "will speak"
+                }
+            },
+            "raconter": {
+                "primitive": "SPEAK",
+                "en": {
+                    "présent": "tells",
+                    "passé": "told",
+                    "futur": "will tell"
+                }
+            },
+            "écouter": {
+                "primitive": "ATTEND",
+                "en": {
+                    "présent": "listens to",
+                    "passé": "listened to",
+                    "futur": "will listen to"
+                }
+            },
+            "regarder": {
+                "primitive": "ATTEND",
+                "en": {
+                    "présent": "looks at",
+                    "passé": "looked at",
+                    "futur": "will look at"
+                }
+            },
+            "observer": {
+                "primitive": "ATTEND",
+                "en": {
+                    "présent": "observes",
+                    "passé": "observed",
+                    "futur": "will observe"
+                }
+            },
+            "pousse": {
+                "primitive": "PROPEL",
+                "en": {
+                    "présent": "pushes",
+                    "passé": "pushed",
+                    "futur": "will push"
+                }
+            },
+            "saisir": {
+                "primitive": "GRASP",
+                "en": {
+                    "présent": "grasps",
+                    "passé": "grasped",
+                    "futur": "will grasp"
+                }
+            },
+            "attraper": {
+                "primitive": "GRASP",
+                "en": {
+                    "présent": "catches",
+                    "passé": "caught",
+                    "futur": "will catch"
+                }
+            },
+            "prendre": {
+                "primitive": "GRASP",
+                "en": {
+                    "présent": "takes",
+                    "passé": "took",
+                    "futur": "will take"
+                }
+            },
+            "sauter": {
+                "primitive": "MOVE",
+                "en": {
+                    "présent": "jumps",
+                    "passé": "jumped",
+                    "futur": "will jump"
+                }
+            },
+            "courir": {
+                "primitive": "MOVE",
+                "en": {
+                    "présent": "runs",
+                    "passé": "ran",
+                    "futur": "will run"
+                }
+            },
+            "apporter": {
+                "primitive": "PTRANS",
+                "en": {
+                    "présent": "brings",
+                    "passé": "brought",
+                    "futur": "will bring"
+                }
+            },
+            "emmener": {
+                "primitive": "PTRANS",
+                "en": {
+                    "présent": "takes",
+                    "passé": "took",
+                    "futur": "will take"
+                }
+            },
+            "partager": {
+                "primitive": "ATRANS",
+                "en": {
+                    "présent": "shares",
+                    "passé": "shared",
+                    "futur": "will share"
+                }
+            },
+            "noter": {
+                "primitive": "MTRANS",
+                "en": {
+                    "présent": "notes",
+                    "passé": "noted",
+                    "futur": "will note"
+                }
+            },
+            "réfléchir": {
+                "primitive": "MTRANS",
+                "en": {
+                    "présent": "reflects",
+                    "passé": "reflected",
+                    "futur": "will reflect"
+                }
+            },
+            "inventer": {
+                "primitive": "MBUILD",
+                "en": {
+                    "présent": "invents",
+                    "passé": "invented",
+                    "futur": "will invent"
+                }
+            },
+            "avaler": {
+                "primitive": "INGEST",
+                "en": {
+                    "présent": "swallows",
+                    "passé": "swallowed",
+                    "futur": "will swallow"
+                }
+            },
+            "expirer": {
+                "primitive": "EXPEL",
+                "en": {
+                    "présent": "exhales",
+                    "passé": "exhaled",
+                    "futur": "will exhale"
+                }
+            },
+            "chuchoter": {
+                "primitive": "SPEAK",
+                "en": {
+                    "présent": "whispers",
+                    "passé": "whispered",
+                    "futur": "will whisper"
+                }
+            },
+            "fixer": {
+                "primitive": "ATTEND",
+                "en": {
+                    "présent": "stares at",
+                    "passé": "stared at",
+                    "futur": "will stare at"
+                }
+            }
+        },
+        "noms": {
+            "marie": "marie",
+            "paul": "paul",
+            "anne": "anne",
+            "jean": "jean",
+            "luc": "luc",
+            "sophie": "sophie",
+            "pierre": "pierre",
+            "maman": "mom",
+            "papa": "dad",
+            "enfant": "child",
+            "bébé": "baby",
+            "fille": "girl",
+            "garçon": "boy",
+            "professeur": "teacher",
+            "maître": "master",
+            "élève": "pupil",
+            "étudiant": "student",
+            "enseignant": "teacher",
+            "chat": "cat",
+            "chien": "dog",
+            "oiseau": "bird",
+            "cheval": "horse",
+            "poule": "hen",
+            "poussin": "chick",
+            "souris": "mouse",
+            "pomme": "apple",
+            "eau": "water",
+            "pain": "bread",
+            "lait": "milk",
+            "jus": "juice",
+            "livre": "book",
+            "stylo": "pen",
+            "table": "table",
+            "chaise": "chair",
+            "porte": "door",
+            "fenêtre": "window",
+            "maison": "house",
+            "appartement": "apartment",
+            "école": "school",
+            "ville": "city",
+            "village": "village",
+            "rue": "street",
+            "voiture": "car",
+            "vélo": "bike",
+            "bus": "bus",
+            "train": "train",
+            "avion": "plane",
+            "fusée": "spaceship",
+            "terre": "earth",
+            "lune": "moon",
+            "soleil": "sun",
+            "mars": "mars",
+            "message": "message",
+            "lettre": "letter",
+            "histoire": "story",
+            "question": "question",
+            "réponse": "answer",
+            "information": "information",
+            "idée": "idea",
+            "force": "force",
+            "direction": "direction",
+            "bouteille": "bottle",
+            "clé": "key",
+            "ordinateur": "computer",
+            "tableau": "board",
+            "lampe": "lamp",
+            "balle": "ball",
+            "poisson": "fish",
+            "chaton": "kitten",
+            "chiot": "puppy",
+            "grenouille": "frog",
+            "canard": "duck",
+            "sac": "bag",
+            "camion": "truck",
+            "bateau": "boat",
+            "montagne": "mountain",
+            "forêt": "forest",
+            "océan": "ocean",
+            "plage": "beach",
+            "chanson": "song",
+            "poème": "poem",
+            "musique": "music",
+            "film": "movie",
+            "photo": "photo",
+            "dessin": "drawing",
+            "couleur": "color",
+            "odeur": "smell",
+            "bruit": "noise",
+            "lumière": "light",
+            "ombre": "shadow",
+            "astronaute": "astronaut"
+        },
+        "adverbes": {
+            "rapidement": "quickly",
+            "lentement": "slowly",
+            "silencieusement": "silently",
+            "bruyamment": "noisily",
+            "doucement": "gently",
+            "fortement": "strongly",
+            "fréquemment": "frequently",
+            "rarement": "rarely",
+            "toujours": "always",
+            "parfois": "sometimes",
+            "ailleurs": "elsewhere",
+            "ici": "here",
+            "là-bas": "there"
+        },
+        "adjectifs": {
+            "grand": "big",
+            "petit": "small",
+            "jeune": "young",
+            "vieux": "old",
+            "nouveau": "new",
+            "beau": "beautiful",
+            "joli": "pretty",
+            "fort": "strong",
+            "faible": "weak",
+            "intelligent": "smart",
+            "brillant": "brilliant",
+            "rouge": "red",
+            "bleu": "blue",
+            "vert": "green",
+            "jaune": "yellow",
+            "noir": "black",
+            "blanc": "white",
+            "bruyant": "noisy",
+            "silencieux": "quiet",
+            "léger": "light",
+            "lourd": "heavy",
+            "rapide": "fast",
+            "lent": "slow"
+        },
+        "expressions": {
+            "il pleut des cordes": "it's raining cats and dogs",
+            "avoir la pêche": "to feel great",
+            "tomber dans les pommes": "to faint",
+            "coûter les yeux de la tête": "to cost an arm and a leg",
+            "donner sa langue au chat": "to give up guessing",
+            "poser un lapin": "to stand someone up",
+            "casser les pieds": "to annoy",
+            "tirer les vers du nez": "to get someone to talk"
+        }
+    },
+    "frames_config": {
+        "celestial_bodies_rules": {
+            "terre": {
+                "subject_form": "Earth",
+                "non_subject_form": "the earth"
+            },
+            "lune": {
+                "subject_form": "the Moon",
+                "non_subject_form": "the Moon"
+            },
+            "soleil": {
+                "subject_form": "the Sun",
+                "non_subject_form": "the Sun"
+            },
+            "mars": {
+                "subject_form": "Mars",
+                "non_subject_form": "Mars"
+            }
+        },
+        "primitive_to_en_verb": {
+            "PTRANS": "take off",
+            "MOVE": "walk",
+            "ATRANS": "transfer",
+            "MTRANS": "think",
+            "MBUILD": "build",
+            "PROPEL": "push",
+            "INGEST": "eat",
+            "EXPEL": "exhale",
+            "SPEAK": "say",
+            "ATTEND": "look at",
+            "GRASP": "grab"
+        },
+        "frames_definition": {
+            "PTRANS": {
+                "name": "PTRANS",
+                "slots": [
+                    "agent",
+                    "objet",
+                    "source",
+                    "destination",
+                    "instrument"
+                ],
+                "description": "Physical transfer of an object from one location to another."
+            },
+            "MOVE": {
+                "name": "MOVE",
+                "slots": [
+                    "agent",
+                    "source",
+                    "destination",
+                    "manière"
+                ],
+                "description": "Self-propelled movement from one place to another."
+            },
+            "ATRANS": {
+                "name": "ATRANS",
+                "slots": [
+                    "agent",
+                    "objet",
+                    "bénéficiaire",
+                    "source"
+                ],
+                "description": "Abstract transfer, e.g. transmit info or give possession."
+            },
+            "MTRANS": {
+                "name": "MTRANS",
+                "slots": [
+                    "agent",
+                    "information",
+                    "source",
+                    "destination"
+                ],
+                "description": "Transfert mental d'informations ou de connaissances."
+            },
+            "MBUILD": {
+                "name": "MBUILD",
+                "slots": [
+                    "agent",
+                    "idées_source",
+                    "résultat"
+                ],
+                "description": "Construction mentale de nouvelles idées à partir d'idées existantes."
+            },
+            "PROPEL": {
+                "name": "PROPEL",
+                "slots": [
+                    "agent",
+                    "objet",
+                    "direction",
+                    "force"
+                ],
+                "description": "Appliquer une force pour faire bouger un objet (pousser, tirer...)."
+            },
+            "INGEST": {
+                "name": "INGEST",
+                "slots": [
+                    "agent",
+                    "substance"
+                ],
+                "description": "Manger, boire ou introduire une substance dans le corps."
+            },
+            "EXPEL": {
+                "name": "EXPEL",
+                "slots": [
+                    "agent",
+                    "substance",
+                    "origin"
+                ],
+                "description": "Expulser ou éjecter une substance hors du corps (cracher, souffler...)."
+            },
+            "SPEAK": {
+                "name": "SPEAK",
+                "slots": [
+                    "agent",
+                    "message",
+                    "audience"
+                ],
+                "description": "Production d'un énoncé linguistique (dire, raconter, etc.)."
+            },
+            "ATTEND": {
+                "name": "ATTEND",
+                "slots": [
+                    "agent",
+                    "cible_sens"
+                ],
+                "description": "Focaliser son attention (regarder, écouter...)."
+            },
+            "GRASP": {
+                "name": "GRASP",
+                "slots": [
+                    "agent",
+                    "objet"
+                ],
+                "description": "Saisir ou prendre un objet physiquement."
+            }
+        }
+    }
+}

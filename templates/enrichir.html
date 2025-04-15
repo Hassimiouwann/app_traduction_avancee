@@ -1,0 +1,55 @@
+<!-- templates/enrichir.html  -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Enrichir la base</title>
+</head>
+<body>
+  <h2>Ajouter un mot/expression/verbe</h2>
+  <form id="ajoutForm">
+    <label for="categorie">Catégorie :</label>
+    <select id="categorie">
+      <option value="noms">Noms</option>
+      <option value="verbes">Verbes</option>
+      <option value="adjectifs">Adjectifs</option>
+      <option value="adverbes">Adverbes</option>
+      <option value="expressions">Expressions</option>
+      <!-- etc. -->
+    </select><br><br>
+
+    <label for="mot_fr">Mot (FR) :</label>
+    <input type="text" id="mot_fr" required><br><br>
+
+    <label for="mot_en">Traduction (EN) :</label>
+    <input type="text" id="mot_en" required><br><br>
+
+    <button type="button" onclick="ajouterMot()">Ajouter</button>
+  </form>
+
+  <div id="resultat"></div>
+
+  <script>
+    function ajouterMot() {
+      const data = {
+        categorie: document.getElementById('categorie').value,
+        mot_fr: document.getElementById('mot_fr').value.trim(),
+        mot_en: document.getElementById('mot_en').value.trim()
+      };
+
+      fetch('/ajouter_mot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(res => {
+        document.getElementById('resultat').innerText = res.message;
+      })
+      .catch(err => {
+        console.error(err);
+      });
+    }
+  </script>
+</body>
+</html>
