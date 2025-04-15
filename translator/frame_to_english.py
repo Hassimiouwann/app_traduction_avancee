@@ -1,12 +1,4 @@
-# translator/frame_to_english.py (ultra-robuste : gestion slots, adjectifs/adverbes, fallback accent, logs)
-
-import unicodedata
-
-def unaccent(text):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', text)
-        if unicodedata.category(c) != 'Mn'
-    )
+# translator/frame_to_english.py (version robuste : meilleure gestion des slots, adjectives et fallback)
 
 def extract_text_and_pos(slot):
     if slot is None:
@@ -18,13 +10,9 @@ def extract_text_and_pos(slot):
 def translate_frames_to_english(frames, connaissances, frames_config):
     english_sentences = []
     for frame in frames:
-        if "type" in frame and frame["type"] == "no_frame_detected":
-            # Log special frame
-            english_sentences.append("[No frame detected: {}]".format(frame.get("diagnostic", "")))
-        else:
-            sentence_en = translate_single_frame_to_english(frame, connaissances, frames_config)
-            if sentence_en:
-                english_sentences.append(sentence_en)
+        sentence_en = translate_single_frame_to_english(frame, connaissances, frames_config)
+        if sentence_en:
+            english_sentences.append(sentence_en)
     return " ".join(english_sentences)
 
 def translate_single_frame_to_english(frame, connaissances, frames_config):
@@ -33,20 +21,29 @@ def translate_single_frame_to_english(frame, connaissances, frames_config):
     verbe_fr = frame.get("verbe_fr")
 
     # Extraction des slots et de leur POS
-    # On récupère tous les slots connus, et on gère dynamiquement les autres si besoin
-    slots = [
-        "agent", "objet", "source", "destination", "instrument", "manière", "bénéficiaire",
-        "information", "idées_source", "résultat", "direction", "force", "substance", "origin",
-        "message", "audience", "cible_sens"
-    ]
-    slot_values = {}
-    for slot in slots:
-        slot_values[slot+"_text"], slot_values[slot+"_pos"] = extract_text_and_pos(frame.get(slot))
+    agent_text, agent_pos = extract_text_and_pos(frame.get("agent"))
+    objet_text, objet_pos = extract_text_and_pos(frame.get("objet"))
+    source_text, source_pos = extract_text_and_pos(frame.get("source"))
+    destination_text, destination_pos = extract_text_and_pos(frame.get("destination"))
+    instrument_text, instrument_pos = extract_text_and_pos(frame.get("instrument"))
+    maniere_text, maniere_pos = extract_text_and_pos(frame.get("manière"))
+    beneficiaire_text, beneficiaire_pos = extract_text_and_pos(frame.get("bénéficiaire"))
+    information_text, information_pos = extract_text_and_pos(frame.get("information"))
+    idees_source_text, idees_source_pos = extract_text_and_pos(frame.get("idées_source"))
+    resultat_text, resultat_pos = extract_text_and_pos(frame.get("résultat"))
+    direction_text, direction_pos = extract_text_and_pos(frame.get("direction"))
+    force_text, force_pos = extract_text_and_pos(frame.get("force"))
+    substance_text, substance_pos = extract_text_and_pos(frame.get("substance"))
+    origin_text, origin_pos = extract_text_and_pos(frame.get("origin"))
+    message_text, message_pos = extract_text_and_pos(frame.get("message"))
+    audience_text, audience_pos = extract_text_and_pos(frame.get("audience"))
+    cible_sens_text, cible_sens_pos = extract_text_and_pos(frame.get("cible_sens"))
 
     primitive_to_en_verb = frames_config["primitive_to_en_verb"]
 
-    # Récupération du verbe anglais selon la base de connaissance (essai lemma, sans accents, etc)
-    english_verb = get_from_kb_with_fallback(verbe_fr, connaissances["verbes"], "en", temps)
+    # Récupération du verbe anglais selon la base de connaissance (temps + lemma)
+    english_verb = connaissances["verbes"].get(verbe_fr, {}).get("en", {}).get(temps)
+
     # Fallback si pas trouvé
     if not english_verb:
         english_verb = primitive_to_en_verb.get(primitive, "do")
@@ -57,29 +54,30 @@ def translate_single_frame_to_english(frame, connaissances, frames_config):
         elif temps == "futur":
             english_verb = f"will {english_verb}"
 
-    # Traduction ultra-robuste des slots : essaye toutes les catégories, avec et sans accents
-    agent_en = translate_phrase(slot_values["agent_text"], connaissances, frames_config, role="subject", pos=slot_values["agent_pos"])
-    objet_en = translate_phrase(slot_values["objet_text"], connaissances, frames_config, pos=slot_values["objet_pos"])
-    source_en = translate_phrase(slot_values["source_text"], connaissances, frames_config, pos=slot_values["source_pos"])
-    destination_en = translate_phrase(slot_values["destination_text"], connaissances, frames_config, pos=slot_values["destination_pos"])
-    instrument_en = translate_phrase(slot_values["instrument_text"], connaissances, frames_config, pos=slot_values["instrument_pos"])
-    manner_en = translate_phrase(slot_values["manière_text"], connaissances, frames_config, cat='adverbes', pos=slot_values["manière_pos"])
-    beneficiaire_en = translate_phrase(slot_values["bénéficiaire_text"], connaissances, frames_config, pos=slot_values["bénéficiaire_pos"])
-    info_en = translate_phrase(slot_values["information_text"], connaissances, frames_config, pos=slot_values["information_pos"])
-    idees_src_en = translate_phrase(slot_values["idées_source_text"], connaissances, frames_config, pos=slot_values["idées_source_pos"])
-    resultat_en = translate_phrase(slot_values["résultat_text"], connaissances, frames_config, pos=slot_values["résultat_pos"])
-    direction_en = translate_phrase(slot_values["direction_text"], connaissances, frames_config, pos=slot_values["direction_pos"])
-    force_en = translate_phrase(slot_values["force_text"], connaissances, frames_config, pos=slot_values["force_pos"])
-    substance_en = translate_phrase(slot_values["substance_text"], connaissances, frames_config, pos=slot_values["substance_pos"])
-    origin_en = translate_phrase(slot_values["origin_text"], connaissances, frames_config, pos=slot_values["origin_pos"])
-    message_en = translate_phrase(slot_values["message_text"], connaissances, frames_config, pos=slot_values["message_pos"])
-    audience_en = translate_phrase(slot_values["audience_text"], connaissances, frames_config, pos=slot_values["audience_pos"])
-    cible_sens_en = translate_phrase(slot_values["cible_sens_text"], connaissances, frames_config, pos=slot_values["cible_sens_pos"])
+    # Traduction des slots en anglais, en passant le POS pour robustesse
+    agent_en = translate_word(agent_text, connaissances, frames_config, role="subject", pos=agent_pos)
+    objet_en = translate_word(objet_text, connaissances, frames_config, pos=objet_pos)
+    source_en = translate_word(source_text, connaissances, frames_config, pos=source_pos)
+    destination_en = translate_word(destination_text, connaissances, frames_config, pos=destination_pos)
+    instrument_en = translate_word(instrument_text, connaissances, frames_config, pos=instrument_pos)
+    manner_en = translate_word(maniere_text, connaissances, frames_config, cat='adverbes', pos=maniere_pos)
+    beneficiaire_en = translate_word(beneficiaire_text, connaissances, frames_config, pos=beneficiaire_pos)
+    info_en = translate_word(information_text, connaissances, frames_config, pos=information_pos)
+    idees_src_en = translate_word(idees_source_text, connaissances, frames_config, pos=idees_source_pos)
+    resultat_en = translate_word(resultat_text, connaissances, frames_config, pos=resultat_pos)
+    direction_en = translate_word(direction_text, connaissances, frames_config, pos=direction_pos)
+    force_en = translate_word(force_text, connaissances, frames_config, pos=force_pos)
+    substance_en = translate_word(substance_text, connaissances, frames_config, pos=substance_pos)
+    origin_en = translate_word(origin_text, connaissances, frames_config, pos=origin_pos)
+    message_en = translate_word(message_text, connaissances, frames_config, pos=message_pos)
+    audience_en = translate_word(audience_text, connaissances, frames_config, pos=audience_pos)
+    cible_sens_en = translate_word(cible_sens_text, connaissances, frames_config, pos=cible_sens_pos)
 
     # -------- Correction : ne pas mettre "The" devant un agent nom propre --------
-    agent_phrase = agent_en
-    if agent_en and (slot_values["agent_pos"] != "PROPN") and not agent_en.lower().startswith(("the ", "a ", "an ")):
-        agent_phrase = f"the {agent_en}"
+    if agent_pos == "PROPN":
+        agent_phrase = agent_en
+    else:
+        agent_phrase = f"the {agent_en}" if agent_en else None
 
     # On assemble la phrase en fonction de la primitive
     sentence = ""
@@ -219,89 +217,54 @@ def add_third_person_s(verb_phrase):
     words = verb_phrase.split()
     if not words:
         return verb_phrase
+
     first_word = words[0]
+    # Ne double pas le 's' si déjà conjugué
     if not first_word.endswith("s"):
         first_word += "s"
     words[0] = first_word
     return " ".join(words)
 
-def get_from_kb_with_fallback(key, verbes_kb, tense="en", temps="présent"):
-    # Cherche avec et sans accents
-    if key in verbes_kb and tense in verbes_kb[key]:
-        if isinstance(verbes_kb[key][tense], dict):
-            return verbes_kb[key][tense].get(temps)
-        return verbes_kb[key][tense]
-    key_noacc = unaccent(key)
-    if key_noacc in verbes_kb and tense in verbes_kb[key_noacc]:
-        if isinstance(verbes_kb[key_noacc][tense], dict):
-            return verbes_kb[key_noacc][tense].get(temps)
-        return verbes_kb[key_noacc][tense]
-    return None
-
-def translate_phrase(text, connaissances, frames_config, cat=None, role=None, pos=None):
-    """
-    Ultra-robuste : gère adjectifs/noms/adverbes multiples dans une phrase, essaye toutes les catégories, tente sans accents
-    """
-    if not text:
+def translate_word(word, connaissances, frames_config, cat=None, role=None, pos=None):
+    if not word:
         return None
 
-    # Nettoie et découpe la phrase en mots
-    text_clean = text.lower().replace("le ", "").replace("la ", "").replace("les ", "").replace("l'", "").strip()
-    # Sépare les mots
-    parts = text_clean.split()
-    translated_parts = []
-    for part in parts:
-        # Si possible, traduit dans la catégorie demandée
-        found = None
-        search_cats = [cat] if cat else []
-        # Ajoute toutes les catégories si ce n'est pas une catégorie imposée
-        if not search_cats:
-            search_cats = ["noms", "adjectifs", "adverbes"]
+    word_clean = word.lower().replace("le ", "").replace("la ", "").replace("les ", "").replace("l'", "")
+    word_clean = word_clean.strip()
 
-        for c in search_cats:
-            if part in connaissances.get(c, {}):
-                found = connaissances[c][part]
-                break
-            part_noacc = unaccent(part)
-            if part_noacc in connaissances.get(c, {}):
-                found = connaissances[c][part_noacc]
-                break
-        # Si pas trouvé, tente dans toutes les catégories
-        if not found:
-            for c in ["noms", "adjectifs", "adverbes"]:
-                if part in connaissances.get(c, {}):
-                    found = connaissances[c][part]
-                    break
-                part_noacc = unaccent(part)
-                if part_noacc in connaissances.get(c, {}):
-                    found = connaissances[c][part_noacc]
-                    break
-        # Si encore rien, fallback : retourne _mot
-        if not found:
-            found = f"_{part}"
-        translated_parts.append(found)
+    # Si la phrase contient déjà un adjectif (ex: "jolie pomme"), séparer et traduire chaque terme
+    if " " in word_clean:
+        parts = word_clean.split()
+        translated_parts = []
+        for part in parts:
+            # Cherche d'abord dans adjectifs, sinon dans noms
+            if part in connaissances.get("adjectifs", {}):
+                translated_parts.append(connaissances["adjectifs"][part])
+            elif part in connaissances.get("noms", {}):
+                translated_parts.append(connaissances["noms"][part])
+            else:
+                translated_parts.append(f"_{part}")
+        return " ".join(translated_parts)
 
-    # Gestion du cas des corps célestes (frames_config)
     celestial_bodies = frames_config["celestial_bodies_rules"]
-    joined = " ".join(parts)
-    joined_noacc = unaccent(joined)
-    if joined in celestial_bodies:
+    if word_clean in celestial_bodies:
         if role == "subject":
-            return celestial_bodies[joined]["subject_form"]
+            return celestial_bodies[word_clean]["subject_form"]
         else:
-            return celestial_bodies[joined]["non_subject_form"]
-    if joined_noacc in celestial_bodies:
-        if role == "subject":
-            return celestial_bodies[joined_noacc]["subject_form"]
-        else:
-            return celestial_bodies[joined_noacc]["non_subject_form"]
+            return celestial_bodies[word_clean]["non_subject_form"]
+
+    if cat:
+        return connaissances.get(cat, {}).get(word_clean, f"_{word_clean}")
 
     # Si c'est un nom propre SpaCy
     if pos == "PROPN":
-        return text
+        return word
 
-    # Pour les rôles d'agents/objets (noms communs), ajoute "the" si nécessaire
-    val = " ".join(translated_parts)
-    if role != "subject" and pos == "NOUN" and not val.lower().startswith(("the ", "a ", "an ", "_")):
-        return f"the {val}"
-    return val
+    for category in ["noms", "adjectifs", "adverbes", "articles", "pronoms", "prépositions"]:
+        if word_clean in connaissances.get(category, {}):
+            val = connaissances[category][word_clean]
+            if category == "noms" and role != "subject" and not val.lower().startswith(("the ", "a ", "an ", "_")):
+                return f"the {val}"
+            return val
+
+    return f"_{word_clean}"
