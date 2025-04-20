@@ -108,7 +108,7 @@ def build_frames(phrase, global_config):
 def slot_value_with_pos(token):
     if token is None:
         return None
-    # Ajout : concatène adjectif(s) éventuel(s)
+    # Ajout : concatène adjectif(s) éventuel(s)
     text = token.text
     if hasattr(token, "children"):
         adjs = [child.text for child in token.children if child.pos_ == "ADJ"]
@@ -167,7 +167,7 @@ def find_nsubj(verb_token, doc):
     for child in verb_token.children:
         if child.dep_ == "nsubj":
             return child
-    # Fallback : cherche NOUN/PROPN à gauche du verbe
+    # Fallback : cherche NOUN/PROPN à gauche du verbe
     for tok in doc:
         if tok.i < verb_token.i and tok.pos_ in ("PROPN", "NOUN"):
             return tok
