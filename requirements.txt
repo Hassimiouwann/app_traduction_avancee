@@ -1,5 +1,3 @@
 flask
 nltk
 spacy==3.5.0
-# Comme tu as installé le modèle fr_core_news_md==3.5.0,
-# tu n'as pas besoin de lister le modèle ici.
