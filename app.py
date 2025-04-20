@@ -1,19 +1,23 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# app.py
 
-import os
-import string
-import re
-import nltk
 from flask import Flask, render_template, request, jsonify
-from werkzeug.utils import secure_filename
+import nltk
+import json
+import string
+import os
+import re
+import re
 
-# === Import depuis la nouvelle base MySQL ===
-from translator.global_config import load_global_config
 
-# Charger builder + traducteur (inchangé)
+
+# Charger la config globale (knowledge_base + frames_config)
+from translator.global_config import load_global_config, save_global_config
+
+# Charger builder + traducteur
 from translator.frame_builder import build_frames
 from translator.frame_to_english import translate_frames_to_english
+from werkzeug.utils import secure_filename
+
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -22,7 +26,7 @@ except LookupError:
 
 app = Flask(__name__)
 
-# Charger la config globale au démarrage (depuis MySQL)
+# Charger la config globale au démarrage
 global_data = load_global_config()
 
 # On peut garder des raccourcis pour la base + frames
@@ -51,6 +55,9 @@ def index():
     # Page principale (templates/index.html)
     return render_template('index.html')
 
+
+
+
 AUDIO_FOLDER = os.path.join('static', 'expressions_audio')
 os.makedirs(AUDIO_FOLDER, exist_ok=True)
 
@@ -67,28 +74,39 @@ def upload_expression_audio():
     audio.save(save_path)
     return jsonify({'msg': "Audio enregistré !"})
 
+
 @app.route('/record_audio_segments')
 def record_audio_segments():
-    # On recharge la config globale (pour inclure éventuelles modifs)
-    global global_data, knowledge_base
-    global_data = load_global_config()
-    knowledge_base = global_data["knowledge_base"]
+    with open('global_config.json', encoding="utf-8") as f:
+        config = json.load(f)
+    kb = config["knowledge_base"]
     segments_en = set()
     # Expressions idiomatiques
-    segments_en.update(knowledge_base.get("expressions", {}).values())
+    segments_en.update(kb.get("expressions", {}).values())
     # Verbes (tous temps)
-    for v in knowledge_base.get("verbes", {}).values():
+    for v in kb.get("verbes", {}).values():
         for enverb in v.get("en", {}).values():
             segments_en.add(enverb)
     # Noms
-    segments_en.update(knowledge_base.get("noms", {}).values())
+    segments_en.update(kb.get("noms", {}).values())
     # Adjectifs
-    segments_en.update(knowledge_base.get("adjectifs", {}).values())
+    segments_en.update(kb.get("adjectifs", {}).values())
     # Adverbes
-    segments_en.update(knowledge_base.get("adverbes", {}).values())
+    segments_en.update(kb.get("adverbes", {}).values())
     # Trie pour l'affichage
     segments_en = sorted(segments_en)
     return render_template("record_audio_segments.html", segments_en=segments_en)
+
+
+def tokenize_english_sentence(sentence):
+    # On capture les groupes fréquents et mots ; améliore selon besoin
+    # Exemples de groupes à supporter : "to the", "of the", "in the" etc.
+    GROUPS = [
+        r"to the", r"of the", r"in the", r"at the", r"on the", r"for the", r"with the", r"by the", r"from the"
+    ]
+    pattern = "|".join(GROUPS) + r"|[\w']+"
+    return re.findall(pattern, sentence, flags=re.IGNORECASE)
+
 
 def get_audio_segments_from_kb(knowledge_base):
     """Retourne l'ensemble des segments anglais multi-mots utilisés dans la base (ex: 'takes off', 'will take off')"""
@@ -110,6 +128,7 @@ def get_audio_segments_from_kb(knowledge_base):
     segments = sorted(segments, key=lambda s: -len(s))
     return segments
 
+
 def smart_tokenize_english(sentence, knowledge_base):
     """
     Découpe la phrase anglaise en segments selon la base (verbes composés, expressions, groupes comme 'from the', etc.), puis mots.
@@ -125,6 +144,7 @@ def smart_tokenize_english(sentence, knowledge_base):
         pattern = re.compile(r'\b' + re.escape(seg) + r'\b')
         for m in pattern.finditer(sentence_lc):
             idx = m.start()
+            # Vérifier qu'on n'a pas déjà utilisé ces caractères
             if not any(used[idx:idx+len(seg)]):
                 found.append((idx, idx+len(seg), sentence[idx:idx+len(seg)]))
                 for i in range(idx, idx+len(seg)):
@@ -141,7 +161,7 @@ def smart_tokenize_english(sentence, knowledge_base):
                 if current:
                     rest.append((i-len(current), i, current))
                     current = ""
-                if c.strip() and c not in ".!?,":  # ponctuation exclue
+                if c.strip() and c not in ".!?,":
                     rest.append((i, i+1, c))
         else:
             if current:
@@ -162,14 +182,9 @@ def smart_tokenize_english(sentence, knowledge_base):
     result = [tok for tok in result if re.match(r"^[\w\s']+$", tok)]
     return result
 
+# Dans ta route /traduire, modifie comme suit :
 @app.route('/traduire', methods=['POST'])
 def traduire():
-    global global_data, knowledge_base, frames_config_data
-    # Recharger la config à chaque requête pour prise en compte modifications en BDD
-    global_data = load_global_config()
-    knowledge_base = global_data["knowledge_base"]
-    frames_config_data = global_data["frames_config"]
-
     data = request.json
     phrase = data.get('phrase', '').strip()
     if phrase and phrase[0].islower():
@@ -213,6 +228,7 @@ def traduire():
         "audio_tokens": audio_tokens
     })
 
+# ------ Route unique pour enrichir la config globale ------
 @app.route('/ajouter_data', methods=['POST'])
 def ajouter_data():
     """
@@ -232,10 +248,91 @@ def ajouter_data():
       //   ... + champs nécessaires
     }
     """
-    # Ici, pour la version MySQL, il faut implémenter l'insertion dans la base.
-    # À faire : tu peux adapter la logique de populate_db.py ici si besoin.
-    return jsonify({"msg": "Route à implémenter pour l'insertion directe en base MySQL."}), 501
+    data = request.json
+    if not data:
+        return jsonify({"msg": "Pas de données reçues"}), 400
 
+    global_data_reload = load_global_config()  # recharger la dernière version
+    kb = global_data_reload["knowledge_base"]
+    fc = global_data_reload["frames_config"]
+
+    type_zone = data.get("type_zone")
+
+    if type_zone == "knowledge_base":
+        # Ex: { "categorie": "noms", "mot_fr":"chat", "mot_en":"cat" }
+        categorie = data.get("categorie")
+        mot_fr = data.get("mot_fr")
+        mot_en = data.get("mot_en")
+        primitive = data.get("primitive", None)
+
+        if not categorie or not mot_fr or not mot_en:
+            return jsonify({"msg":"Paramètres manquants (categorie, mot_fr, mot_en)."}), 400
+
+        # Vérifier que la catégorie existe ou la créer si tu veux
+        if categorie not in kb:
+            kb[categorie] = {}
+
+        if categorie == "verbes":
+            # On stocke un dict
+            # ex: "verbes": { "envoyer": { "en":{"présent":"send"}, "primitive":"ATRANS"}}
+            kb["verbes"].setdefault(mot_fr, {})
+            kb["verbes"][mot_fr]["en"] = {"présent": mot_en}
+            if primitive:
+                kb["verbes"][mot_fr]["primitive"] = primitive
+        else:
+            # ex: "noms": { "chat": "cat" }
+            kb[categorie][mot_fr] = mot_en
+
+    elif type_zone == "frames_config":
+        # ex: sub_type => "celestial_bodies_rules", "primitive_to_en_verb", "frames_definition"
+        sub_type = data.get("type_data")
+        if sub_type == "celestial_bodies_rules":
+            # ex: { "clef":"lune", "subject_form":"the Moon", "non_subject_form":"the Moon" }
+            clef = data.get("clef")
+            subject_form = data.get("subject_form")
+            non_subject_form = data.get("non_subject_form")
+            if clef and subject_form and non_subject_form:
+                fc["celestial_bodies_rules"][clef.lower()] = {
+                    "subject_form": subject_form,
+                    "non_subject_form": non_subject_form
+                }
+            else:
+                return jsonify({"msg":"Données incomplètes pour celestial_bodies_rules"}),400
+
+        elif sub_type == "primitive_to_en_verb":
+            # ex: { "primitive":"MTRANS", "verb_en":"transfer" }
+            primitive = data.get("primitive")
+            verb_en = data.get("verb_en")
+            if primitive and verb_en:
+                fc["primitive_to_en_verb"][primitive] = verb_en
+            else:
+                return jsonify({"msg":"Données incomplètes pour primitive_to_en_verb"}),400
+
+        elif sub_type == "frames_definition":
+            # ex: { "primitive":"PROPEL", "slots":["agent","objet"], "description":"..." }
+            primitive = data.get("primitive")
+            slots = data.get("slots", [])
+            description = data.get("description", "")
+            if primitive and slots:
+                fc["frames_definition"][primitive] = {
+                    "name": primitive,
+                    "slots": slots,
+                    "description": description
+                }
+            else:
+                return jsonify({"msg":"Données incomplètes pour frames_definition"}),400
+
+        else:
+            return jsonify({"msg": f"type_data '{sub_type}' inconnu"}),400
+
+    else:
+        return jsonify({"msg": f"type_zone '{type_zone}' inconnu. Utilisez 'knowledge_base' ou 'frames_config'."}),400
+
+    # Sauvegarder
+    save_global_config(global_data_reload)
+    return jsonify({"msg": "OK, data ajoutée/maj."})
+
+# On peut imaginer un GET pour afficher un formulaire unique "enrichir_global.html" si besoin
 @app.route('/enrichir_config', methods=['GET'])
 def page_enrichir_config():
     return render_template('enrichir_global.html')
