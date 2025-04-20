@@ -1,4 +1,4 @@
-# translator/frame_to_english.py (version robuste : meilleure gestion des slots, adjectives et fallback)
+# translator/frame_to_english.py (version robuste : meilleure gestion des slots, adjectives et fallback)
 
 def extract_text_and_pos(slot):
     if slot is None:
@@ -73,7 +73,7 @@ def translate_single_frame_to_english(frame, connaissances, frames_config):
     audience_en = translate_word(audience_text, connaissances, frames_config, pos=audience_pos)
     cible_sens_en = translate_word(cible_sens_text, connaissances, frames_config, pos=cible_sens_pos)
 
-    # -------- Correction : ne pas mettre "The" devant un agent nom propre --------
+    # -------- Correction : ne pas mettre "The" devant un agent nom propre --------
     if agent_pos == "PROPN":
         agent_phrase = agent_en
     else:
